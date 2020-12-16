@@ -4,8 +4,8 @@ import { searchController } from '../controllers';
 
 const router = express();
 
+// TODO: Update this to support new post format
 router.route('/')
-
   // Main query-based search
   .get(async (req, res) => {
     try {

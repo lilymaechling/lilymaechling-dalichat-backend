@@ -1,19 +1,11 @@
-import bodyParser from 'body-parser';
 import express from 'express';
 
 import { Users } from '../models';
 
 import { requireAuth } from '../authentication';
-import { documentNotFoundError, getFieldNotFoundError, getSuccessfulDeletionMessage } from '../helpers/constants';
+import { documentNotFoundError, getSuccessfulDeletionMessage } from '../helpers/constants';
 
 const router = express();
-
-// TODO: Move middleware attachment to test file
-if (process.env.NODE_ENV === 'test') {
-  // enable json message body for posting data to router
-  router.use(bodyParser.urlencoded({ extended: true }));
-  router.use(bodyParser.json());
-}
 
 router.use(requireAuth);
 
@@ -22,54 +14,33 @@ router.route('/')
   .get(async (req, res) => {
     try {
       const users = await Users.find({});
+
+      // Delete sensitive information from the sent user objects
       const cleanedUsers = await Promise.all(users.map((user) => {
         return new Promise((resolve) => {
-          user = user.toJSON();
-          delete user.password;
-          resolve(user);
+          const newUser = user.toJSON();
+          delete newUser.password;
+          resolve(newUser);
         });
       }));
+
       return res.status(200).json(cleanedUsers);
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   })
 
-  // Create new user
-  .post(async (req, res) => {
+// * User creation handled by authRouter
+
+  // ! TESTING ONLY
+  .delete(requireAuth, async (req, res) => {
     try {
-      const user = new Users();
-
-      const {
-        email, password, first_name, last_name,
-      } = req.body;
-
-      if (!email) return res.status(400).json({ message: getFieldNotFoundError('email') });
-      if (!password) return res.status(400).json({ message: getFieldNotFoundError('password') });
-
-      user.email = email;
-      user.password = password;
-      user.first_name = first_name || '';
-      user.last_name = last_name || '';
-
-      const savedUser = await user.save();
-      const json = savedUser.toJSON();
-      delete json.password;
-      return res.status(201).json(json);
+      await Users.deleteMany({ });
+      return res.status(200).json({ message: 'Successfully deleted all users.' });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   });
-
-// // ! TESTING ONLY
-// .delete(requireAuth, async (req, res) => {
-//   try {
-//     await Users.deleteMany({ });
-//     return res.status(200).json({ message: 'Successfully deleted all users.' });
-//   } catch (error) {
-//     return res.status(500).json({ message: error.message });
-//   }
-// });
 
 router.route('/:id')
   .get(async (req, res) => {
