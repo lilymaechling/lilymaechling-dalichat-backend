@@ -1,4 +1,3 @@
-import bodyParser from 'body-parser';
 import express from 'express';
 
 import { Resources } from '../models';
@@ -6,13 +5,6 @@ import { requireAuth } from '../authentication';
 import { documentNotFoundError, getFieldNotFoundError, getSuccessfulDeletionMessage } from '../helpers/constants';
 
 const router = express();
-
-// TODO: Move middleware attachment to test file
-if (process.env.NODE_ENV === 'test') {
-  // enable json message body for posting data to router
-  router.use(bodyParser.urlencoded({ extended: true }));
-  router.use(bodyParser.json());
-}
 
 // find and return all resources
 router.route('/')

@@ -3,11 +3,12 @@ import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
 const UserSchema = new Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  first_name: String,
-  last_name: String,
-  resource: { type: Schema.Types.ObjectId, ref: 'Resource' },
+  email: { type: Schema.Types.String, required: true, unique: true },
+  username: { type: Schema.Types.String, required: true, unique: true },
+  password: { type: Schema.Types.String, required: true },
+  firstName: { type: Schema.Types.String, required: true },
+  lastName: { type: Schema.Types.String, required: true },
+  posts: [{ type: Schema.Types.ObjectId, ref: 'Post' }],
 }, {
   toObject: {
     virtuals: true,
@@ -51,7 +52,7 @@ UserSchema.methods.comparePassword = function (password, callback) {
   });
 };
 
-UserSchema.virtual('full_name').get(function () {
+UserSchema.virtual('fullName').get(function () {
   return `${this.first_name} ${this.last_name}`;
 });
 
