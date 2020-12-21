@@ -14,7 +14,7 @@ const ResourceSchema = new Schema({
  * * Virtuals are only resolved after a query, so if results
  * * are being sliced any length virtuals will be inaccurate
  */
-ResourceSchema.pre('update', function (next) {
+ResourceSchema.post('validate', function (_doc, next) {
   if (this.isNew || this.isModified('likes')) {
     const document = this;
     document.numLikes = document.likes.length;

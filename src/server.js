@@ -11,6 +11,8 @@ import {
 /**
  * Need to complete:
  * TODO: Add global error handling for standard errors (with next() support)
+ * TODO: Follow this schema with all routers: https://mongoosejs.com/docs/documents.html#updating
+ * TODO: Add post ownership on create
  */
 
 import * as constants from './helpers/constants';

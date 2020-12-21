@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 
 import { Posts, Users } from '../models';
 import { requireAuth } from '../authentication';
@@ -117,33 +118,31 @@ router.route('/like/:id')
   .post(requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
-      const foundPost = await Posts.findOne({ _id: req.params.id });
-      if (!foundPost) return res.status(404).json({ message: `User with uid ${id} not found` });
-
-      // Validate fields
       const { uid } = req.body;
-      if (!uid) return res.status(400).json({ message: getFieldNotFoundError('uid') });
 
-      // Validate uid
+      const foundPost = await Posts.findOne({ _id: id });
+      if (!foundPost) return res.status(404).json({ message: `Post with uid ${id} not found` });
+
+      // Validate "uid" field
+      if (!uid) return res.status(400).json({ message: getFieldNotFoundError('uid') });
       const foundUser = await Users.findById({ _id: uid });
-      if (!foundUser) return res.status().json({ message: `User with uid ${uid} not found` });
+      if (!foundUser) return res.status(400).json({ message: `User with uid ${uid} not found` });
 
       // Update post
-      const unliking = foundPost.likes.includes(uid);
-      const updateObject = unliking
-        ? { $pull: { likes: uid } } // Remove uid from 'likes' array (unlike post)
-        : { $push: { likes: uid } }; // Add uid to 'likes' array (like post)
+      const unliking = foundPost.likes.some((l) => { return l.toString() === uid; });
 
-      const updatedPost = await Posts
-        .findOneAndUpdate(
-          { _id: id }, updateObject,
-          { useFindAndModify: false, new: true },
-        ).populate({
-          path: 'owner',
-          select: '-password',
-        });
+      if (unliking) {
+        foundPost.likes = foundPost.likes.filter((e) => { return e._id.toString() !== uid; });
+      } else {
+        foundPost.likes = foundPost.likes.slice();
+        foundPost.likes.push(new mongoose.Types.ObjectId(uid));
+      }
 
-      return res.status(200).json(updatedPost);
+      // Save doc and populate
+      const savedPost = await foundPost.save();
+      const populatedPost = await Posts.populate(savedPost, { path: 'owner', select: '-password' });
+
+      return res.status(200).json(populatedPost);
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
