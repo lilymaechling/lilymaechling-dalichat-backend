@@ -8,6 +8,11 @@ import {
   authRouter, userRouter, postRouter, searchRouter,
 } from './routers';
 
+/**
+ * Need to complete:
+ * TODO: Add global error handling for standard errors (with next() support)
+ */
+
 import * as constants from './helpers/constants';
 
 require('dotenv').config();

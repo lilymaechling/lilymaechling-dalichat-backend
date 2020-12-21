@@ -30,10 +30,10 @@
 
 #### Post Fields
 
-- title
 - content
 - likes
 - postDate
+- owner
 
 #### Post Virtuals
 
@@ -49,6 +49,12 @@ No virtuals
 - password*
 - firstname*
 - lastName*
+
+- profile url
+- isAdmin
+- isVerified
+- background url
+
 - posts
 
 #### User Virtuals

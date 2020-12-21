@@ -58,9 +58,46 @@ router.route('/:id')
     }
   })
 
-  .put(async (req, res) => {
+  .put(requireAuth, async (req, res) => {
     try {
-      const updatedUser = await Users.findOneAndUpdate({ _id: req.params.id }, req.body, { useFindAndModify: false, new: true });
+      const {
+        email, username, firstName, lastName, profileUrl, backgroundUrl, portfolioUrl, blurb, // * Only allow these fields to be updated
+        authPassword, // ! Do not update these fields
+        password, // ! Update these fields securely (needs verification match)
+      } = req.body;
+
+      const foundUser = await Users.findById(req.params.id);
+
+      // Update password only if password matches
+      if (password) {
+        // Determine if authPassword matches actual password
+        const passwordsMatch = await new Promise((resolve, reject) => {
+          foundUser.comparePassword(authPassword, (error, same) => {
+            if (error) reject(error);
+            else resolve(same);
+          });
+        });
+
+        // Reject update if passwords don't match
+        if (!passwordsMatch) {
+          return res.status(401).json({ message: 'Invalid authentication' });
+        } else {
+          foundUser.markModified('password'); // ? Why is this needed to rehash password?
+          foundUser.password = password;
+        }
+      }
+
+      if (email) { foundUser.email = email; }
+      if (username) { foundUser.username = username; }
+      if (firstName) { foundUser.firstName = firstName; }
+      if (lastName) { foundUser.lastName = lastName; }
+      if (profileUrl) { foundUser.profileUrl = profileUrl; }
+      if (backgroundUrl) { foundUser.backgroundUrl = backgroundUrl; }
+      if (portfolioUrl) { foundUser.portfolioUrl = portfolioUrl; }
+      if (blurb) { foundUser.blurb = blurb; }
+
+      // Else update all passed fields (no update if undefined)
+      const updatedUser = await foundUser.save();
       const json = updatedUser.toJSON();
       delete json.password;
       return res.status(200).json(json);
@@ -73,7 +110,7 @@ router.route('/:id')
     }
   })
 
-  .delete(async (req, res) => {
+  .delete(requireAuth, async (req, res) => {
     try {
       await Users.findOneAndDelete({ _id: req.params.id }, { useFindAndModify: false });
       return res.json({ message: getSuccessfulDeletionMessage(req.params.id) });

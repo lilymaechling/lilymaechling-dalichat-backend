@@ -3,7 +3,7 @@ import express from 'express';
 import validator from 'email-validator';
 
 import { userController } from '../controllers';
-import { requireSignin } from '../authentication';
+import { requireAuth, requireSignin } from '../authentication';
 import { Users } from '../models';
 
 import { getFieldNotFoundError } from '../helpers/constants';
@@ -39,7 +39,7 @@ router.route('/signup')
       // Make a new user from passed data
       const newUser = new Users({
         email: email.toLowerCase(),
-        username,
+        username: username.toLowerCase(),
         password,
         firstName,
         lastName,
@@ -65,6 +65,13 @@ router.route('/signin')
     delete json.password;
 
     return res.json({ token: userController.tokenForUser(json), user: json });
+  });
+
+router.route('/validate')
+  .post(requireAuth, (req, res) => {
+    const json = JSON.parse(JSON.stringify(req.user));
+    delete json.password;
+    res.status(200).json({ user: json });
   });
 
 export default router;
