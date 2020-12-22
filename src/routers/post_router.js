@@ -11,8 +11,8 @@ const router = express();
 router.route('/')
   .get(requireAuth, async (req, res) => {
     try {
-      const resources = await Posts.find({});
-      return res.status(200).json(resources);
+      const posts = await Posts.find({});
+      return res.status(200).json({ posts });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
@@ -26,16 +26,22 @@ router.route('/')
       if (!content) return res.status(400).json({ message: getFieldNotFoundError('content') });
       if (!uid) return res.status(400).json({ message: getFieldNotFoundError('uid') });
 
-      // TODO: add post to owner's record here
-
       resource.content = content;
       resource.likes = [];
       resource.numLikes = 0;
       resource.postDate = Date.now();
       resource.owner = uid;
 
-      const savedResource = await resource.save();
-      return res.status(201).json(savedResource);
+      const savedPost = await resource.save();
+
+      const owner = await Users.findOne({ _id: savedPost.owner });
+      owner.posts.push(savedPost._id);
+      const savedOwner = await owner.save();
+
+      const json = savedOwner.toJSON();
+      delete json.password;
+
+      return res.status(201).json({ post: savedPost, owner: savedOwner });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
@@ -54,8 +60,8 @@ router.route('/')
 router.route('/:id')
   .get(async (req, res) => {
     try {
-      const resource = await Posts.findById(req.params.id);
-      return res.status(200).json(resource);
+      const post = await Posts.findById(req.params.id);
+      return res.status(200).json({ post });
     } catch (error) {
       if (error.kind === 'ObjectId') {
         return res.status(404).json({ message: documentNotFoundError });
@@ -68,8 +74,8 @@ router.route('/:id')
   .put(requireAuth, async (req, res) => {
     try {
       // TODO: limit fields request can update
-      const resource = await Posts.findOneAndUpdate({ _id: req.params.id }, req.body, { useFindAndModify: false, new: true });
-      return res.status(200).json(resource);
+      const post = await Posts.findOneAndUpdate({ _id: req.params.id }, req.body, { useFindAndModify: false, new: true });
+      return res.status(200).json({ post });
     } catch (error) {
       if (error.kind === 'ObjectId') {
         return res.status(404).json({ message: documentNotFoundError });
@@ -81,14 +87,27 @@ router.route('/:id')
 
   .delete(requireAuth, async (req, res) => {
     try {
+      // Find and verify valid post id (pid)
+      const foundPost = await Posts.findOne({ _id: req.params.id });
+      if (!foundPost) return res.status(404).json({ message: documentNotFoundError });
+
+      // Find and verify valid owner
+      const owner = await Users.findOne({ _id: foundPost.owner });
+      if (!owner) throw new Error('Post has no specified owner');
+
+      // Remove pid from owner's "posts" array
+      owner.posts = owner.posts.filter((pid) => { return pid !== req.params.id; });
+      const savedOwner = await owner.save();
+
+      // Remove password from owner object
+      const json = savedOwner.toJSON();
+      delete json.password;
+
+      // Delete post
       await Posts.findOneAndDelete({ _id: req.params.id }, { useFindAndModify: false });
-      return res.status(200).json({ message: getSuccessfulDeletionMessage(req.params.id) });
+      return res.status(200).json({ owner: json, message: getSuccessfulDeletionMessage(req.params.id) });
     } catch (error) {
-      if (error.kind === 'ObjectId') {
-        return res.status(404).json({ message: documentNotFoundError });
-      } else {
-        return res.status(500).json({ message: error.message });
-      }
+      return res.status(500).json({ message: error.message });
     }
   });
 
@@ -142,7 +161,7 @@ router.route('/like/:id')
       const savedPost = await foundPost.save();
       const populatedPost = await Posts.populate(savedPost, { path: 'owner', select: '-password' });
 
-      return res.status(200).json(populatedPost);
+      return res.status(200).json({ post: populatedPost });
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }

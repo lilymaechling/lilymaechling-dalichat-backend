@@ -13,6 +13,8 @@ import {
  * TODO: Add global error handling for standard errors (with next() support)
  * TODO: Follow this schema with all routers: https://mongoosejs.com/docs/documents.html#updating
  * TODO: Add post ownership on create
+ * TODO: Add liked posts array
+ * TODO: Find better way to handle removing sensitive information from response
  */
 
 import * as constants from './helpers/constants';
