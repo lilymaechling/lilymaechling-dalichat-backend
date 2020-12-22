@@ -15,6 +15,9 @@ import {
  * TODO: Add post ownership on create
  * TODO: Add liked posts array
  * TODO: Find better way to handle removing sensitive information from response
+ * TODO: Fix numPosts value setter
+ * TODO: Update numPosts on post delete (in frontend)
+ * TODO: Remove postid from user.posts on post delete
  */
 
 import * as constants from './helpers/constants';

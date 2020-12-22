@@ -57,7 +57,7 @@ UserSchema.pre('save', function (next) {
  * * Virtuals are only resolved after a query, so if results
  * * are being sliced any length virtuals will be inaccurate
  */
-UserSchema.pre('update', function (next) {
+UserSchema.post('validate', function (_doc, next) {
   if (this.isNew || this.isModified('posts')) {
     const document = this;
     document.numPosts = document.posts.length;

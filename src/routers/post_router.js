@@ -96,7 +96,7 @@ router.route('/:id')
       if (!owner) throw new Error('Post has no specified owner');
 
       // Remove pid from owner's "posts" array
-      owner.posts = owner.posts.filter((pid) => { return pid !== req.params.id; });
+      owner.posts = owner.posts.filter((pid) => { return pid !== new mongoose.Types.ObjectId(req.params.id); });
       const savedOwner = await owner.save();
 
       // Remove password from owner object
@@ -125,10 +125,13 @@ router.route('/user/:id')
         });
 
       const resultIds = posts.map((r) => { return r._id; });
-
       return res.status(200).json({ results: posts, resultIds, numResults: posts.length });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      if (error.kind === 'ObjectId') {
+        return res.status(404).json({ message: documentNotFoundError });
+      } else {
+        return res.status(500).json({ message: error.message });
+      }
     }
   });
 
