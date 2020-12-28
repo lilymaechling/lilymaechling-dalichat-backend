@@ -10,7 +10,7 @@ import {
 
 /**
  * Need to complete:
- * TODO: Add global error handling for standard errors (with next() support)
+ * TODO: Add password removal support for all fetched users
  * TODO: Follow this schema with all routers: https://mongoosejs.com/docs/documents.html#updating
  * TODO: Add post ownership on create
  * TODO: Add liked posts array
@@ -18,6 +18,11 @@ import {
  * TODO: Fix numPosts value setter
  * TODO: Update numPosts on post delete (in frontend)
  * TODO: Remove postid from user.posts on post delete
+ *
+ * TODO: Add global error handling for standard errors (with next() support)
+ *
+ * TODO: Document API schema, endpoints, and best practices (inline endpoint documentation)
+ * ? Look into mongoose model validation
  */
 
 import * as constants from './helpers/constants';
@@ -48,8 +53,26 @@ app.use('/posts', postRouter); // NOTE: Partially secured to users
 app.use('/search', searchRouter); // NOTE: Not secured
 
 // default index route
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.send('Welcome to backend!');
+});
+
+// Custom 404 middleware
+app.use((_req, res) => {
+  res.status(404).json({ message: 'The route you\'ve requested doesn\'t exist' });
+});
+
+// Error handling middleware
+app.use((error, _req, res, next) => {
+  const { code = 500, message = 'Internal Server Error' } = error;
+  if (res.headersSent) { next(error); }
+
+  // Handle custom error behavior based on types here (e.g. DocumentNotFoundError)
+  if (error instanceof mongoose.Error.CastError) {
+    return res.status(400).json({ message: `Value ${error.stringValue} is not a valid ObjectId` });
+  } else {
+    return res.status(code).json({ message });
+  }
 });
 
 // DB Setup
@@ -66,11 +89,6 @@ mongoose.connect(process.env.MONGODB_URI, mongooseOptions).then(() => {
   console.info('Connected to Database');
 }).catch((err) => {
   console.error('Not Connected to Database - ERROR! ', err);
-});
-
-// Custom 404 middleware
-app.use((req, res) => {
-  res.status(404).json({ message: 'The route you\'ve requested doesn\'t exist' });
 });
 
 // Set mongoose promise to JS promise
