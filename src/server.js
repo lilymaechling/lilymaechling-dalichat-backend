@@ -10,12 +10,6 @@ import {
 
 import * as constants from './helpers/constants';
 
-/**
- * TODO: Document API schema, endpoints, and best practices (inline endpoint documentation)
- * ? Look into mongoose model validation
- * ? Add liked posts array
- */
-
 // Load config vars from ".env" files
 require('dotenv').config();
 
