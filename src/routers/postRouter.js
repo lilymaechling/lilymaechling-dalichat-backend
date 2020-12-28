@@ -9,12 +9,12 @@ const router = express();
 
 // find and return all resources
 router.route('/')
-  .get(requireAuth, async (_req, res) => {
+  .get(requireAuth, async (_req, res, next) => {
     try {
       const posts = await postController.readAll();
       return res.status(200).json({ posts });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      return next(error);
     }
   })
 
@@ -43,7 +43,7 @@ router.route('/:id')
     try {
       const { id } = req.params;
 
-      // Limits the fields a user request can update while allowing the controller to update any valid field
+      // * Limits the fields a user request can update while allowing the controller to update any valid field
       const { content } = req.body;
 
       const post = await postController.update(id, { content });

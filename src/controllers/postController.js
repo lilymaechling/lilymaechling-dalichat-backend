@@ -1,13 +1,16 @@
 import mongoose from 'mongoose';
-import { Posts, Users } from '../models'; // TODO: Use user controller
+
+import { Posts } from '../models';
+import * as userController from './userController';
+
 import { DocumentNotFoundError, IncompleteRequestError } from '../errors';
 
 export const create = async ({ content, uid }) => {
   if (!content) throw new IncompleteRequestError('content');
   if (!uid) throw new IncompleteRequestError('uid');
 
+  // Create new post document and add fields
   const post = new Posts();
-
   post.content = content;
   post.likes = [];
   post.numLikes = 0;
@@ -16,18 +19,21 @@ export const create = async ({ content, uid }) => {
 
   const savedPost = await post.save();
 
-  // TODO: Use user controller methods
-  const owner = await Users.findOne({ _id: savedPost.owner });
-  owner.posts.push(savedPost._id);
+  // Find and validate owner (notFound handled in userController)
+  const owner = await userController.read(savedPost.owner);
 
-  const savedOwner = (await owner.save()).toJSON();
-  delete savedOwner.password;
+  // Update owner's "posts" array with new post id
+  const updatedPostsArr = owner.posts.slice();
+  updatedPostsArr.push(savedPost._id);
+  const savedOwner = await userController.update(owner._id, { posts: updatedPostsArr });
 
   return { post: savedPost, owner: savedOwner };
 };
 
 export const read = async (id) => {
-  const foundPost = await Posts.findById(id);
+  const foundPost = await Posts
+    .findById(id)
+    .populate({ path: 'owner', select: '-password' });
   if (!foundPost) { throw new DocumentNotFoundError(id); }
   return foundPost;
 };
@@ -42,7 +48,9 @@ export const update = async (id, fields) => {
   if (likes) foundPost.likes = likes;
   if (numLikes) foundPost.numLikes = numLikes;
 
-  return foundPost.save();
+  // Can't save and populate with one "await" call
+  const savedPost = await foundPost.save();
+  return savedPost.populate({ path: 'owner', select: '-password' });
 };
 
 export const remove = async (id) => {
@@ -50,25 +58,25 @@ export const remove = async (id) => {
   const foundPost = await read(id);
   if (!foundPost) { throw new DocumentNotFoundError(id); }
 
-  // Find and verify valid owner
-  const owner = await Users.findOne({ _id: foundPost.owner });
-  if (!owner) throw new DocumentNotFoundError(foundPost.owner, 'owner');
+  // Find and verify valid owner (notFound handled in userController)
+  const owner = await userController.read(foundPost.owner);
 
   // Remove pid from owner's "posts" array
-  // TODO: Use user controller "update" functionality
-  owner.posts = owner.posts.filter((pid) => { return pid !== new mongoose.Types.ObjectId(id); });
-  const savedOwner = (await owner.save()).toJSON();
+  let updatedPostsArr = owner.posts.slice();
+  updatedPostsArr = updatedPostsArr.filter((pid) => { return pid.toString() !== id; });
+  const savedOwner = await userController.update(owner._id, { posts: updatedPostsArr });
 
   await foundPost.remove();
   return savedOwner;
 };
 
 export const readAll = async () => {
-  return Posts.find({});
+  return Posts
+    .find({})
+    .populate({ path: 'owner', select: '-password' });
 };
 
 export const findUserPosts = async (uid) => {
-  // TODO: Interact with user controller
   const posts = await Posts
     .find({ owner: uid })
     .sort({ postDate: -1 })
@@ -83,28 +91,25 @@ export const findUserPosts = async (uid) => {
 };
 
 export const likePost = async (id, uid) => {
-  const foundPost = await Posts.findOne({ _id: id });
+  const foundPost = await read(id);
   if (!foundPost) throw new DocumentNotFoundError(id);
 
   // Validate "uid" field
-  // TODO: Use user controller here
   if (!uid) throw new IncompleteRequestError('uid');
-  const foundUser = await Users.findById({ _id: uid });
-  if (!foundUser) throw new DocumentNotFoundError(uid, 'owner');
+  await userController.read(uid);
 
-  // Update post
+  // Is the user liking or unliking the post?
   const unliking = foundPost.likes.some((l) => { return l.toString() === uid; });
 
+  // Update post "likes" array
+  let updatedLikesArr = foundPost.likes.slice();
+
   if (unliking) {
-    foundPost.likes = foundPost.likes.filter((e) => { return e._id.toString() !== uid; });
+    updatedLikesArr = updatedLikesArr.filter((e) => { return e._id.toString() !== uid; });
   } else {
-    foundPost.likes = foundPost.likes.slice();
-    foundPost.likes.push(new mongoose.Types.ObjectId(uid));
+    updatedLikesArr.push(new mongoose.Types.ObjectId(uid));
   }
 
-  // Save doc and populate
-  const savedPost = await foundPost.save();
-  const populatedPost = await Posts.populate(savedPost, { path: 'owner', select: '-password' });
-
-  return populatedPost;
+  // Save updated likes array to post and return saved post object
+  return update(foundPost._id, { likes: updatedLikesArr });
 };

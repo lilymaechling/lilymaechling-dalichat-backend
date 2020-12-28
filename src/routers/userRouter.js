@@ -20,9 +20,7 @@ router.route('/')
     }
   });
 
-// * User creation handled by authRouter
-
-// * Server does not support deleting all users
+// * User creation handled by authRouter's "/signin" route
 
 router.route('/:id')
   .get(async (req, res, next) => {

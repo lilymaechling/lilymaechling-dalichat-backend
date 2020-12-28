@@ -16,7 +16,7 @@ const jwtLogin = new JwtStrategy(jwtOptions, (payload, done) => {
   // See if the token matches any user document in the DB
   // Done function in the form -> "done(resulting error, resulting user)"
   Users.findById(payload.sub, (err, user) => {
-    // This logic can be modified to check for user attributes
+    // * This logic can be modified to check for user attributes
     if (err) {
       return done(err, false); // Error return
     } else if (user) {
@@ -33,11 +33,11 @@ passport.use(jwtLogin);
 const requireAuth = function (req, res, next) {
   // eslint-disable-next-line prefer-arrow-callback
   passport.authenticate('jwt', { session: false }, function (err, user, info) {
-  // Return any existing errors
+    // Return any existing errors
     if (err) { return next(err); }
 
     // If no user found, return appropriate error message
-    if (!user) { return res.status(401).json({ message: info.message || 'Error authenticating email and password' }); }
+    if (!user) { return res.status(401).json({ message: info.message || 'Error authenticating jwt' }); }
 
     req.user = user;
 

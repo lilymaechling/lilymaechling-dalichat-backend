@@ -46,7 +46,9 @@ export const create = async ({
 };
 
 export const read = async (id) => {
-  return Users.findOne({ _id: id }, { password: 0 });
+  const foundUser = await Users.findOne({ _id: id }, { password: 0 });
+  if (!foundUser) { throw new DocumentNotFoundError(id); }
+  return foundUser;
 };
 
 export const update = async (id, fields, authPassword = '') => {
