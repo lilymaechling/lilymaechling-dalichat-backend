@@ -1,8 +1,9 @@
 import express from 'express';
 
+import { postController } from '../controllers';
+
 import { requireAuth } from '../authentication';
 import { getSuccessfulDeletionMessage } from '../helpers/constants';
-import { postController } from '../controllers';
 
 const router = express();
 
