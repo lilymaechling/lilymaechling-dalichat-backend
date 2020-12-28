@@ -8,51 +8,41 @@ import {
   authRouter, userRouter, postRouter, searchRouter,
 } from './routers';
 
-/**
- * Need to complete:
- * TODO: Add password removal support for all fetched users
- * TODO: Follow this schema with all routers: https://mongoosejs.com/docs/documents.html#updating
- * TODO: Add post ownership on create
- * TODO: Add liked posts array
- * TODO: Find better way to handle removing sensitive information from response
- * TODO: Fix numPosts value setter
- * TODO: Update numPosts on post delete (in frontend)
- * TODO: Remove postid from user.posts on post delete
- *
- * TODO: Add global error handling for standard errors (with next() support)
- *
- * TODO: Document API schema, endpoints, and best practices (inline endpoint documentation)
- * ? Look into mongoose model validation
- */
-
 import * as constants from './helpers/constants';
 
+/**
+ * TODO: Document API schema, endpoints, and best practices (inline endpoint documentation)
+ * ? Look into mongoose model validation
+ * ? Add liked posts array
+ */
+
+// Load config vars from ".env" files
 require('dotenv').config();
 
-// initialize
+// Initialize Express app
 const app = express();
 
-// enable/disable cross origin resource sharing if necessary
+// Enable / disable cross origin resource sharing if necessary
 app.use(cors());
 
-// enable/disable http request logging
+// Enable / disable http request logging
 app.use(morgan('dev'));
 
-// enable json message body for posting data to router
+// Enable json message body for posting data to router
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// enable json message body for posting data to API
+// Enable json message body for posting data to API
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// declare routers
-app.use('/auth', authRouter); // NOTE: Not secured
-app.use('/users', userRouter); // NOTE: Completely secured to users
-app.use('/posts', postRouter); // NOTE: Partially secured to users
-app.use('/search', searchRouter); // NOTE: Not secured
+// Declare app routers
+app.use('/auth', authRouter);
+app.use('/users', userRouter);
+app.use('/posts', postRouter);
+app.use('/search', searchRouter);
 
-// default index route
+// Declare default route handler
 app.get('/', (_req, res) => {
   res.send('Welcome to backend!');
 });
@@ -75,7 +65,7 @@ app.use((error, _req, res, next) => {
   }
 });
 
-// DB Setup
+// Configure MongoDB mongoose connection
 const mongooseOptions = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -83,7 +73,7 @@ const mongooseOptions = {
   loggerLevel: 'error',
 };
 
-// Connect the database
+// Connect to the database via mongoose
 mongoose.connect(process.env.MONGODB_URI, mongooseOptions).then(() => {
   mongoose.Promise = global.Promise; // configures mongoose to use ES6 Promises
   console.info('Connected to Database');
@@ -94,8 +84,9 @@ mongoose.connect(process.env.MONGODB_URI, mongooseOptions).then(() => {
 // Set mongoose promise to JS promise
 mongoose.Promise = global.Promise;
 
-// START THE SERVER
-// =============================================================================
-const server = app.listen(constants.PORT);
-console.log(`listening on: ${constants.PORT}`);
+// Initialize server
+const port = process.env.PORT || constants.PORT;
+const server = app.listen(port);
+console.log(`listening on: ${port}`);
+
 export default server;

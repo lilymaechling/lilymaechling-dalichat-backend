@@ -55,11 +55,11 @@ UserSchema.pre('save', function (next) {
 /**
  * Updates numPosts on "posts" field update
  * * Virtuals are only resolved after a query, so if results
- * * are being sliced any length virtuals will be inaccurate
+ * * are being sliced any length-based virtuals will be inaccurate
  */
 UserSchema.post('validate', function (_doc, next) {
   if (this.isNew || this.isModified('posts')) {
-    const document = this;
+    const document = this; // Saves scope if callbacks are needed
     document.numPosts = document.posts.length;
   }
   next();
@@ -67,12 +67,12 @@ UserSchema.post('validate', function (_doc, next) {
 
 // Add a method to the user model to compare passwords
 // Boolean "same" returns whether or not the passwords match to callback function
-UserSchema.methods.comparePassword = function (password, callback) {
+UserSchema.methods.comparePassword = function (password, done) {
   bcrypt.compare(password, this.password, (error, same) => {
     if (error) {
-      callback(error);
+      done(error);
     } else {
-      callback(error, same);
+      done(error, same);
     }
   });
 };

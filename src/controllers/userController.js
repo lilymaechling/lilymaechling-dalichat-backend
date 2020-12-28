@@ -56,6 +56,8 @@ export const update = async (id, fields, authPassword = '') => {
     email, username, firstName, lastName,
     profileUrl, backgroundUrl, portfolioUrl,
     blurb, password,
+
+    isAdmin, isVerified, posts, numPosts,
   } = fields;
 
   const foundUser = await read(id);
@@ -88,6 +90,11 @@ export const update = async (id, fields, authPassword = '') => {
   if (backgroundUrl) { foundUser.backgroundUrl = backgroundUrl; }
   if (portfolioUrl) { foundUser.portfolioUrl = portfolioUrl; }
   if (blurb) { foundUser.blurb = blurb; }
+
+  if (isAdmin) { foundUser.isAdmin = isAdmin; }
+  if (isVerified) { foundUser.isVerified = isVerified; }
+  if (posts) { foundUser.posts = posts; }
+  if (numPosts) { foundUser.numPosts = numPosts; }
 
   // Save changes
   const updatedUser = (await foundUser.save()).toJSON();
