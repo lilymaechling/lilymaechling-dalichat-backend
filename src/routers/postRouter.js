@@ -1,3 +1,4 @@
+// @ts-check
 import express from 'express';
 
 import { postController } from '../controllers';
@@ -68,8 +69,9 @@ router.route('/user/:uid')
   .get(async (req, res, next) => {
     try {
       const { uid } = req.params;
-      const { posts, resultIds } = await postController.findUserPosts(uid);
-      return res.status(200).json({ results: posts, resultIds, numResults: posts.length });
+      const results = await postController.findUserPosts(uid);
+      const resultIds = results.map((r) => { return r._id; });
+      return res.status(200).json({ results, resultIds, numResults: results.length });
     } catch (error) {
       return next(error);
     }

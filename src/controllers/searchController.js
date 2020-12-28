@@ -1,5 +1,10 @@
 import { Posts, Users } from '../models';
 
+/**
+ * Parses object containing key:value pairs for query variables
+ * @param {object} reqQuery object containing query key:value pairs to parse
+ * @returns {object} object containing parsed key:value pairs
+ */
 export const parseQuery = (reqQuery) => {
   const { query } = reqQuery;
   const field = reqQuery.field ? reqQuery.field.toLowerCase() : '';
@@ -12,6 +17,17 @@ export const parseQuery = (reqQuery) => {
   });
 };
 
+/**
+ * Searches posts collection and returns documents that fit passed query requirements
+ *
+ * @async
+ * @param {string} query query string to search post content for
+ * @param {string} field field to sort by ("likes" or by date)
+ * @param {number} sortNum -1 to sort ascending, 1 to sort descending
+ * @param {number} page page of results to return
+ * @param {number} numPerPage number of results to return from query
+ * @returns {Promise<object[]>} resolves populated post results from search
+ */
 export const postSearch = async (query, field, sortNum, page, numPerPage) => {
   const andArr = [];
   andArr.push(
@@ -42,6 +58,16 @@ export const postSearch = async (query, field, sortNum, page, numPerPage) => {
   return results;
 };
 
+/**
+ * Searches posts collection and returns documents that fit passed query requirements
+ *
+ * @async
+ * @param {string} query query string to search post content for
+ * @param {number} sortNum -1 to sort ascending, 1 to sort descending
+ * @param {number} page page of results to return
+ * @param {number} numPerPage number of results to return from query
+ * @returns {Promise<object>} resolves object containing array of user results and array of subset of post objects the user document owns
+ */
 export const userSearch = async (query, sortNum, page, numPerPage) => {
   const andArr = [];
   andArr.push(query

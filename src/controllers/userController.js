@@ -1,3 +1,5 @@
+// eslint-disable-next-line no-unused-vars
+import mongoose from 'mongoose';
 import jwt from 'jwt-simple';
 import validator from 'email-validator';
 
@@ -6,6 +8,15 @@ import {
   BadCredentialsError, DocumentNotFoundError, IncompleteRequestError, UniqueFieldError,
 } from '../errors';
 
+/**
+ * Creates a new user and saves it to the database
+ *
+ * @async
+ * @param {object} param0 required fields to create a user
+ * @returns {Promise<object>} resolves saved user object
+ * @throws {IncompleteRequestError} throws if required fields aren't included or if email is invalid
+ * @throws {UniqueFieldError} throws if passed email or username fields aren't unique in the database
+ */
 export const create = async ({
   email, username, password, firstName, lastName,
 }) => {
@@ -45,12 +56,31 @@ export const create = async ({
   return savedUser;
 };
 
+/**
+ * Returns the user document with passed id
+ *
+ * @async
+ * @param {mongoose.Types.ObjectId | string} id id of user document to return
+ * @returns {Promise<object>} resolves found user document
+ * @throws {DocumentNotFoundError} throws if no user document exists with passed id
+ */
 export const read = async (id) => {
   const foundUser = await Users.findOne({ _id: id }, { password: 0 });
   if (!foundUser) { throw new DocumentNotFoundError(id); }
   return foundUser;
 };
 
+/**
+ * Updates user document with passed id
+ *
+ * @async
+ * @param {mongoose.Types.ObjectId | string} id id of user document to update
+ * @param {object} fields key:value pairs to update on found user document
+ * @param {string} authPassword password verification (needed to change "password" field on user, else optional)
+ * @returns {Promise<object>} resolves updated user document
+ * @throws {BadCredentialsError} throws if authPassword field doesn't match stored password
+ * @throws {DocumentNotFoundError} throws if no user document exists with passed id
+ */
 export const update = async (id, fields, authPassword = '') => {
   const {
     email, username, firstName, lastName,
@@ -102,17 +132,37 @@ export const update = async (id, fields, authPassword = '') => {
   return updatedUser;
 };
 
+/**
+ * Removes user document with passed id
+ *
+ * @async
+ * @param {mongoose.Types.ObjectId | string} id id of user document to remove
+ * @returns {Promise<object>} resolves MongoDB removal status object
+ * @throws {DocumentNotFoundError} throws if no user document exists with passed id
+ */
 export const remove = async (id) => {
   const foundUser = await read(id);
   if (!foundUser) { throw new DocumentNotFoundError(id); }
   return foundUser.remove();
 };
 
+/**
+ * Returns all documents in "users" collection
+ *
+ * @async
+ * @returns {Promise<object[]>} resolves array of found user documents
+ */
 export const readAll = async () => {
   return Users.find({}, { password: 0 });
 };
 
-export const tokenForUser = (user) => {
+/**
+ * Generates JWT authentication token for user based on passed uid
+ *
+ * @param {mongoose.Types.ObjectId | string} uid id of user to generate auth token for
+ * @returns {string} generated JWT token
+ */
+export const tokenForUser = (uid) => {
   const timestamp = new Date().getTime();
-  return jwt.encode({ sub: user.id, iat: timestamp }, process.env.AUTH_SECRET);
+  return jwt.encode({ sub: uid, iat: timestamp }, process.env.AUTH_SECRET);
 };

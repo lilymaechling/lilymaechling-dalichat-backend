@@ -17,7 +17,7 @@ router.route('/signup')
         email, username, password, firstName, lastName,
       });
 
-      return res.status(201).json({ token: userController.tokenForUser(user), user });
+      return res.status(201).json({ token: userController.tokenForUser(user._id), user });
     } catch (error) {
       return next(error);
     }
@@ -31,7 +31,7 @@ router.route('/signin')
       const user = req.user.toJSON();
       delete user.password;
 
-      return res.status(200).json({ token: userController.tokenForUser(user), user });
+      return res.status(200).json({ token: userController.tokenForUser(user._id), user });
     } catch (error) {
       return next(error);
     }

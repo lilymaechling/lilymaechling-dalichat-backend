@@ -5,6 +5,15 @@ import * as userController from './userController';
 
 import { DocumentNotFoundError, IncompleteRequestError } from '../errors';
 
+/**
+ * Creates a new post and saves it to the database
+ *
+ * @async
+ * @param {*} param0 required fields to create a post
+ * @returns {Promise<object>} resolves created post object
+ * @throws {DocumentNotFoundError} throws if no user document exists with id of uid
+ * @throws {IncompleteRequestError} throws if required fields aren't included
+ */
 export const create = async ({ content, uid }) => {
   if (!content) throw new IncompleteRequestError('content');
   if (!uid) throw new IncompleteRequestError('uid');
@@ -30,6 +39,14 @@ export const create = async ({ content, uid }) => {
   return { post: savedPost, owner: savedOwner };
 };
 
+/**
+ * Finds post object with passed id
+ *
+ * @async
+ * @param {mongoose.Types.ObjectId | string} id id of document to read from
+ * @returns {Promise<object>} post with passed id
+ * @throws {DocumentNotFoundError} throws if no document exists with passed id
+ */
 export const read = async (id) => {
   const foundPost = await Posts
     .findById(id)
@@ -38,6 +55,15 @@ export const read = async (id) => {
   return foundPost;
 };
 
+/**
+ * Updates the selected document and saves the updated document to the database
+ *
+ * @async
+ * @param {mongoose.Types.ObjectId | string} id id of document to update
+ * @param {object} fields updates to make to the document (key:value pairs)
+ * @returns {Promise<object>} post with passed id with updated fields
+ * @throws {DocumentNotFoundError} throws if no document exists with passed id
+ */
 export const update = async (id, fields) => {
   const { content, likes, numLikes } = fields;
 
@@ -53,6 +79,14 @@ export const update = async (id, fields) => {
   return savedPost.populate({ path: 'owner', select: '-password' });
 };
 
+/**
+ * Deletes post based on passed id
+ *
+ * @async
+ * @param {mongoose.Types.ObjectId | string} id id of post to delete
+ * @returns {Promise<object>} owner object of found post
+ * @throws {DocumentNotFoundError} throws if no document exists with passed id
+ */
 export const remove = async (id) => {
   // Find and verify post
   const foundPost = await read(id);
@@ -70,15 +104,30 @@ export const remove = async (id) => {
   return savedOwner;
 };
 
+/**
+ * Returns all documents in "Posts" collection
+ *
+ * @async
+ * @returns {Promise<object[]>} resolves array of all posts in posts collection
+ */
 export const readAll = async () => {
   return Posts
     .find({})
     .populate({ path: 'owner', select: '-password' });
 };
 
+/**
+ * Finds limited subset of posts of a given user
+ *
+ * @async
+ * @param {mongoose.Types.ObjectId | string} uid id of user to find posts for
+ * @returns {Promise<object[]>} resolves found user posts
+ * @throws {DocumentNotFoundError} throws if no user document exists with id of uid
+ */
 export const findUserPosts = async (uid) => {
+  const owner = await userController.read(uid);
   const posts = await Posts
-    .find({ owner: uid })
+    .find({ _id: { $in: owner.posts } })
     .sort({ postDate: -1 })
     .limit(5)
     .populate({
@@ -86,10 +135,19 @@ export const findUserPosts = async (uid) => {
       select: '-password',
     });
 
-  const resultIds = posts.map((r) => { return r._id; });
-  return { posts, resultIds };
+  return posts;
 };
 
+/**
+ * Adds uid to post's "likes" array and returns updated post object
+ *
+ * @async
+ * @param {mongoose.Types.ObjectId | string} id id of post to like
+ * @param {mongoose.Types.ObjectId | string} uid id of owner of post
+ * @returns {Promise<object>} resolves updated post object
+ * @throws {DocumentNotFoundError} throws if documents corresponding to id or uid not found
+ * @throws {IncompleteRequestError} throws if uid missing from request
+ */
 export const likePost = async (id, uid) => {
   const foundPost = await read(id);
   if (!foundPost) throw new DocumentNotFoundError(id);
