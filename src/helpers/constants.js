@@ -1,9 +1,9 @@
-export function getFieldNotFoundError(fieldName) {
-  return `Missing required "${fieldName}" field`;
-}
-
+/**
+ * Creates successful deletion message for HTTP DELETE handlers
+ * @param {string} id id to include in message
+ */
 export function getSuccessfulDeletionMessage(id) {
   return `User with id: ${id} was successfully deleted`;
 }
 
-export const PORT = process.env.PORT || 9090;
+export const DEFAULT_PORT = 9090;

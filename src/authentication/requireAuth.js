@@ -29,7 +29,12 @@ const jwtLogin = new JwtStrategy(jwtOptions, (payload, done) => {
 
 passport.use(jwtLogin);
 
-// Create function to transmit result of authenticate() call to user or next middleware
+/**
+ * Creates function to validate valid JWT Bearer token is included in "Authentication" header. If JWT is valid, includes corresponding user document in req.user field
+ * @param {object} req express request object to parse for username
+ * @param {object} res express response object to respond to with encountered errors
+ * @param {Function} next function to pass errors to express' default error handler
+ */
 const requireAuth = function (req, res, next) {
   // eslint-disable-next-line prefer-arrow-callback
   passport.authenticate('jwt', { session: false }, function (err, user, info) {

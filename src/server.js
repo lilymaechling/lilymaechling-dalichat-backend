@@ -85,7 +85,7 @@ mongoose.connect(process.env.MONGODB_URI, mongooseOptions).then(() => {
 mongoose.Promise = global.Promise;
 
 // Initialize server
-const port = process.env.PORT || constants.PORT;
+const port = process.env.PORT || constants.DEFAULT_PORT;
 const server = app.listen(port);
 console.log(`listening on: ${port}`);
 

@@ -3,8 +3,6 @@ import passport from 'passport';
 import LocalStrategy from 'passport-local';
 import { Users } from '../models';
 
-import { getFieldNotFoundError } from '../helpers/constants';
-
 // Configure what LocalStrategy will check for as a username
 const localOptions = {
   usernameField: 'username',
@@ -33,7 +31,12 @@ const localLogin = new LocalStrategy(localOptions, (username, password, done) =>
 
 passport.use(localLogin);
 
-// Create function to transmit result of authenticate() call to user or next middleware
+/**
+ * Creates function to validate "username" and "password" fields exist in a passed request body. If JWT is valid, includes corresponding user document in req.user field
+ * @param {object} req express request object to parse for username
+ * @param {object} res express response object to respond to with encountered errors
+ * @param {Function} next function to pass errors to express' default error handler
+ */
 const requireSignin = function (req, res, next) {
   // Validation of parameters
   if (!req.body.username) {
@@ -41,7 +44,7 @@ const requireSignin = function (req, res, next) {
   }
 
   if (!req.body.password) {
-    return res.status(400).json({ message: getFieldNotFoundError('password') });
+    return res.status(400).json({ message: 'Password not included in request' });
   }
 
   // eslint-disable-next-line prefer-arrow-callback
