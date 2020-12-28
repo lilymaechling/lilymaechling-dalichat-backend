@@ -1,4 +1,4 @@
-import Post from '../models/post_model';
+import { Posts } from '../models';
 
 function parseQuery(reqQuery) {
   const { query } = reqQuery;
@@ -13,7 +13,7 @@ function parseQuery(reqQuery) {
 }
 
 async function search(queryObject, sort, page, numPerPage) {
-  const results = await Post.find(queryObject) // Return all results (within limits) if no query
+  const results = await Posts.find(queryObject) // Return all results (within limits) if no query
     .sort({ title: sort === 'a' ? -1 : 1 }) // Sort by title
     .skip((page - 1) * numPerPage) // Start at the beginning of the "page"
     .limit(numPerPage) // Limit to the end of the "page"

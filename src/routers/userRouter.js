@@ -28,24 +28,16 @@ router.route('/')
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
-  })
+  });
 
 // * User creation handled by authRouter
 
-  // ! TESTING ONLY
-  .delete(requireAuth, async (req, res) => {
-    try {
-      await Users.deleteMany({ });
-      return res.status(200).json({ message: 'Successfully deleted all users.' });
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
-    }
-  });
+// * Server does not support deleting all users
 
 router.route('/:id')
   .get(async (req, res) => {
     try {
-      const user = await Users.findById(req.params.id);
+      const user = await Users.find({ _id: req.params.id });
       const json = user.toJSON();
       delete json.password;
       return res.status(200).json(json);
@@ -58,7 +50,7 @@ router.route('/:id')
     }
   })
 
-  .put(requireAuth, async (req, res) => {
+  .put(async (req, res) => {
     try {
       const {
         email, username, firstName, lastName, profileUrl, backgroundUrl, portfolioUrl, blurb, // * Only allow these fields to be updated
@@ -110,7 +102,7 @@ router.route('/:id')
     }
   })
 
-  .delete(requireAuth, async (req, res) => {
+  .delete(async (req, res) => {
     try {
       await Users.findOneAndDelete({ _id: req.params.id }, { useFindAndModify: false });
       return res.json({ message: getSuccessfulDeletionMessage(req.params.id) });

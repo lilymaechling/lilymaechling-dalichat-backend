@@ -1,7 +1,7 @@
-import authRouter from './auth_router';
-import userRouter from './user_router';
-import postRouter from './post_router';
-import searchRouter from './search_router';
+import authRouter from './authRouter';
+import userRouter from './userRouter';
+import postRouter from './postRouter';
+import searchRouter from './searchRouter';
 
 export {
   authRouter, userRouter, postRouter, searchRouter,

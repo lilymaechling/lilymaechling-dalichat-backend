@@ -1,6 +1,7 @@
-import searchController from './search_controller';
-import userController from './user_controller';
+import postController from './postController';
+import searchController from './searchController';
+import userController from './userController';
 
 export {
-  searchController, userController,
+  postController, searchController, userController,
 };

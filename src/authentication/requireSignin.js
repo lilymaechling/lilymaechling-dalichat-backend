@@ -1,7 +1,7 @@
 /* eslint-disable func-names */
 import passport from 'passport';
 import LocalStrategy from 'passport-local';
-import User from '../models/user_model';
+import { Users } from '../models';
 
 import { getFieldNotFoundError } from '../helpers/constants';
 
@@ -13,7 +13,7 @@ const localOptions = {
 
 // Make a login strategy to check username and password against DB
 const localLogin = new LocalStrategy(localOptions, (username, password, done) => {
-  return User.findOne({ username }, (error, user) => {
+  return Users.findOne({ username }, (error, user) => {
     // Was a user with the given username able to be found?
     if (error) return done(error);
     if (!user) return done(null, false, { message: 'Username not associated with a user' });
