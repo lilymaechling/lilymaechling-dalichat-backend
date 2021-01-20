@@ -250,15 +250,16 @@ Now that we have a plan for the routers we will need and how their respective en
 - `postRouter.js`
 - `userRouter.js`
 
-We will start by implementing the `postRouter.js` file. We will first need to import the `express` package. Then we will create a new router with the following code:
+We will start by implementing the `postRouter.js` file. We will first need to import the `Router` from the `express` package. Then we will create a new router with the following code:
 
 ```javascript
-const router = express();
+import { Router } from "express";
+const router = Router();
 
 export default router;
 ```
 
-Note that this is declared identically to the main server. We are creating a subapplication within the main server express application which will handle the `/posts` route.
+This creates a new express router that allows you to handle a set of subroutes within your server.
 
 To connect the router to the main server application, first add the following code in the `index.js` file:
 
