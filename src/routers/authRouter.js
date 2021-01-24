@@ -1,23 +1,53 @@
+/* eslint-disable consistent-return */
 import { Router } from 'express';
+
+import { userController } from '../controllers';
+import { requireAuth, requireSignin } from '../authentication';
 
 const router = Router();
 
-router.route('/signup').post((req, res) => {
-  return res
-    .status(200)
-    .json({ message: 'sign up a new user' });
-});
+router.route('/signup')
+  .post(async (req, res, next) => {
+    try {
+      const {
+        email, username, password, firstName, lastName,
+      } = req.body;
 
-router.route('/signin').post((req, res) => {
-  return res
-    .status(200)
-    .json({ message: 'sign in a user' });
-});
+      const user = await userController.create({
+        email, username, password, firstName, lastName,
+      });
 
-router.route('/validate').post((req, res) => {
-  return res
-    .status(200)
-    .json({ message: 'return information about a user' });
-});
+      return res.status(201).json({ token: userController.tokenForUser(user._id), user });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+// Send user object and server will send back authToken and user object
+router.route('/signin')
+  .post(requireSignin, (req, res, next) => {
+    try {
+      // This information is loaded into request object by passport
+      const user = req.user.toJSON();
+      delete user.password;
+
+      return res.status(200).json({ token: userController.tokenForUser(user._id), user });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+router.route('/validate')
+  .post(requireAuth, (req, res, next) => {
+    try {
+      // This information is loaded into request object by passport
+      const user = req.user.toJSON();
+      delete user.password;
+
+      res.status(200).json({ user });
+    } catch (error) {
+      return next(error);
+    }
+  });
 
 export default router;
